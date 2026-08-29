@@ -10,9 +10,9 @@ holds a name, description, version and an `Instructions` string; the enabled ski
 answering agent are read in `AgentTaskService.GetContextAsync`
 (`backend/AgentOffice.API/Services/AgentTaskService.cs`) and appended to the session system prompt as
 `## Skill: …` sections in `buildSystemPrompt` (`agent-worker/src/runtime/office-instructions.ts`).
-There is no script, attachment, or bundled-resource path, and the worker never calls pi's
-`loadSkills`, so the versioned `skills/` directory in this repo is documentation rather than a load
-path. A skill therefore cannot grant a capability: the toolbox is fixed in
+There is no script, attachment, or bundled-resource path: a skill is authored in the *Skills* tab and
+lives only in the database. The worker never calls pi's `loadSkills`, so there is no directory a
+skill can be loaded from either. A skill therefore cannot grant a capability: the toolbox is fixed in
 `agent-worker/src/runtime/office-toolset.ts` and contains no shell, filesystem, or network tool. The
 issues below are about the prompt text itself, not about execution.
 

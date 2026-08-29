@@ -56,7 +56,7 @@ chat message ──► MessageCreatedEvent ──► AgentChatDispatchHandler �
 
 `agent-worker/src/browser/playwright-browser-tool.ts` owns browser lifecycle, the document session cache, and artifacts. Chromium is launched once per worker; editor pages are cached by document id (`AGENT_SESSION_MAX`, LRU) and closed after `AGENT_SESSION_IDLE_MS` of idleness, because an open session keeps holding the document's WOPI lock. Tracing is armed once per context and cut into one chunk per task, kept according to `AGENT_TRACE` (`off` | `failures` | `always`). Interaction pacing — `AGENT_TYPE_DELAY_MS`, `AGENT_KEY_DELAY_MS`, `AGENT_WRITE_SETTLE_MS`, `AGENT_READY_SETTLE_MS`, `AGENT_SCREENSHOT_QUALITY` — is tunable per deployment. Editor-specific knowledge lives in `browser/office-drivers/{collabora,onlyoffice}-driver.ts`, selected with `EDITOR_KIND`; the drivers expose semantic operations while continuing to perform real UI interactions.
 
-The `skills` directory contains versionable operating instructions. Workspace skills stored through the agent resources API are appended to the session system prompt. MCP connection execution remains planned.
+Skills are operating instructions authored through the agent resources API and stored in the database; the ones enabled for the answering agent are appended to the session system prompt. There is no on-disk skill source and no loader for one. MCP connection execution remains planned.
 
 ## Current vertical slice
 
