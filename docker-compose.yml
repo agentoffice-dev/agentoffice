@@ -1,0 +1,97 @@
+services:
+  backend:
+    build:
+      context: ./backend/AgentOffice.API
+      dockerfile: Dockerfile
+    container_name: agent-office-backend
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: "Data Source=/data/agentoffice.db"
+      Storage__UploadPath: /data/uploads
+      AllowedOrigins__0: "http://localhost"
+      AllowedOrigins__1: "http://frontend"
+      Wopi__BaseUrl: "http://backend:8080"
+      Api__BaseUrl: "http://backend:8080"
+      AgentWorker__ApiKey: "${AGENT_WORKER_API_KEY:-local-agent-worker-key}"
+      AgentWorker__UserEmail: "${AGENT_USER_EMAIL:-agent@office.local}"
+      AgentWorker__UserPassword: "${AGENT_USER_PASSWORD:-local-agent-password}"
+      # WOPI-compatible editor — change these two values to switch editors
+      Editors__InternalUrl: "http://collabora:9980"
+      Editors__PublicUrl: "http://localhost:9981"
+    volumes:
+      - ./bin:/data
+    networks:
+      - docnet
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ""
+    container_name: agent-office-frontend
+    restart: unless-stopped
+    ports:
+      - "8788:80"
+    depends_on:
+      - backend
+    networks:
+      - docnet
+
+  agent-worker:
+    build:
+      context: ./agent-worker
+      dockerfile: Dockerfile
+    container_name: agent-office-worker
+    restart: unless-stopped
+    environment:
+      API_BASE_URL: "http://backend:8080"
+      # The worker browses the same origin a person does: the editor's CSP only
+      # allows framing from localhost, and host-resolver rules map those
+      # host:port pairs onto the container network.
+      APP_BASE_URL: "http://localhost:8788"
+      AGENT_WORKER_API_KEY: "${AGENT_WORKER_API_KEY:-local-agent-worker-key}"
+      AGENT_USER_EMAIL: "${AGENT_USER_EMAIL:-agent@office.local}"
+      AGENT_USER_PASSWORD: "${AGENT_USER_PASSWORD:-local-agent-password}"
+      EDITOR_KIND: "collabora"
+      EDITOR_HOST_RESOLVER_RULES: "MAP localhost:8788 frontend:80, MAP localhost:9981 collabora:9980"
+      ARTIFACT_DIR: "/artifacts"
+      # Browser tuning. An editor page is kept open after its task and reused by
+      # the next task on the same document, which skips the whole editor load.
+      AGENT_SESSION_MAX: "${AGENT_SESSION_MAX:-3}"
+      AGENT_SESSION_IDLE_MS: "${AGENT_SESSION_IDLE_MS:-300000}"
+      # off | failures | always. Recording costs time on every browser action.
+      AGENT_TRACE: "${AGENT_TRACE:-failures}"
+      AGENT_TYPE_DELAY_MS: "${AGENT_TYPE_DELAY_MS:-4}"
+      AGENT_KEY_DELAY_MS: "${AGENT_KEY_DELAY_MS:-40}"
+      AGENT_WRITE_SETTLE_MS: "${AGENT_WRITE_SETTLE_MS:-120}"
+      AGENT_READY_SETTLE_MS: "${AGENT_READY_SETTLE_MS:-1500}"
+      AGENT_SCREENSHOT_QUALITY: "${AGENT_SCREENSHOT_QUALITY:-60}"
+      # Fallback credentials, one per vendor pi can run on. A workspace agent
+      # configured on the Agents page overrides these. On Anthropic either an API
+      # key or a `claude setup-token` subscription token works.
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
+      CLAUDE_CODE_OAUTH_TOKEN: "${CLAUDE_CODE_OAUTH_TOKEN:-}"
+      OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
+      GEMINI_API_KEY: "${GEMINI_API_KEY:-}"
+      # pi runs on a vendor the workspace picks, so its model setting names one:
+      # anthropic:, openai: or google:.
+      PI_MODEL: "${PI_MODEL:-anthropic:claude-opus-5}"
+    volumes:
+      - ./bin/agent-artifacts:/artifacts
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - docnet
+
+networks:
+  docnet:
+    driver: bridge

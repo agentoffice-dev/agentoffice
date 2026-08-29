@@ -1,0 +1,17 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+officeweb.db
+uploads/
+
+# Node
+node_modules/
+dist/
+*.tsbuildinfo
+.env
+.env.local
+
+# Docker volumes

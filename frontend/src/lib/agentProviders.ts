@@ -1,0 +1,48 @@
+export const AGENT_PROVIDERS = [
+  ['amazon-bedrock', 'Amazon Bedrock', 'AWS credentials or bearer token', false],
+  ['ant-ling', 'Ant Ling', 'Ant Ling API key', false],
+  ['anthropic', 'Anthropic', 'Anthropic API key', true],
+  ['azure-openai-responses', 'Azure OpenAI', 'Azure OpenAI API key', false],
+  ['baseten', 'Baseten', 'Baseten API key', false],
+  ['cerebras', 'Cerebras', 'Cerebras API key', false],
+  ['cloudflare-ai-gateway', 'Cloudflare AI Gateway', 'Cloudflare API key', false],
+  ['cloudflare-workers-ai', 'Cloudflare Workers AI', 'Cloudflare API key', false],
+  ['deepseek', 'DeepSeek', 'DeepSeek API key', false],
+  ['fireworks', 'Fireworks', 'Fireworks API key', false],
+  ['github-copilot', 'GitHub Copilot', 'GitHub Copilot token', true],
+  ['google', 'Google Gemini', 'Gemini API key', false],
+  ['google-vertex', 'Google Vertex AI', 'Google Cloud credentials', false],
+  ['groq', 'Groq', 'Groq API key', false],
+  ['huggingface', 'Hugging Face', 'Hugging Face token', false],
+  ['kimi-coding', 'Kimi For Coding', 'Kimi API key', true],
+  ['minimax', 'MiniMax', 'MiniMax API key', false],
+  ['minimax-cn', 'MiniMax CN', 'MiniMax CN API key', false],
+  ['mistral', 'Mistral', 'Mistral API key', false],
+  ['moonshotai', 'Moonshot AI', 'Moonshot AI API key', false],
+  ['moonshotai-cn', 'Moonshot AI CN', 'Moonshot AI API key', false],
+  ['nvidia', 'NVIDIA', 'NVIDIA API key', false],
+  ['openai', 'OpenAI', 'OpenAI API key', false],
+  ['openai-codex', 'OpenAI Codex', null, true],
+  ['opencode', 'OpenCode Zen', 'OpenCode API key', false],
+  ['opencode-go', 'OpenCode Go', 'OpenCode API key', false],
+  ['openrouter', 'OpenRouter', 'OpenRouter API key', true],
+  ['qwen-token-plan', 'Qwen Token Plan', 'Qwen Token Plan API key', false],
+  ['qwen-token-plan-cn', 'Qwen Token Plan CN', 'Qwen Token Plan CN API key', false],
+  ['qwen-token-plan-individual', 'Qwen Token Plan Individual', 'Qwen Token Plan Individual API key', false],
+  ['radius', 'Radius', 'Radius API key', true],
+  ['together', 'Together', 'Together API key', false],
+  ['vercel-ai-gateway', 'Vercel AI Gateway', 'Vercel AI Gateway API key', false],
+  ['xai', 'xAI', 'xAI API key', true],
+  ['xiaomi', 'Xiaomi', 'Xiaomi API key', false],
+  ['xiaomi-token-plan-ams', 'Xiaomi Token Plan AMS', 'Xiaomi Token Plan AMS API key', false],
+  ['xiaomi-token-plan-cn', 'Xiaomi Token Plan CN', 'Xiaomi Token Plan CN API key', false],
+  ['xiaomi-token-plan-sgp', 'Xiaomi Token Plan SGP', 'Xiaomi Token Plan SGP API key', false],
+  ['zai', 'Z.AI', 'Z.AI API key', false],
+  ['zai-coding-cn', 'Z.AI Coding CN', 'Z.AI Coding CN API key', false],
+] as const
+
+export type AgentProvider = typeof AGENT_PROVIDERS[number][0]
+export const providerInfo = (id: AgentProvider) => {
+  const entry = AGENT_PROVIDERS.find(provider => provider[0] === id) ?? AGENT_PROVIDERS[2]
+  return { id: entry[0], name: entry[1], apiKeyName: entry[2], hasOAuth: entry[3] }
+}

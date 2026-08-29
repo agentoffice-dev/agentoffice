@@ -1,0 +1,77 @@
+services:
+  backend:
+    build:
+      context: ./backend/AgentOffice.API
+      dockerfile: Dockerfile
+    container_name: agent-office-backend
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: "Data Source=/data/agentoffice.db"
+      Storage__UploadPath: /data/uploads
+      AllowedOrigins__0: "http://localhost:8788"
+      Wopi__BaseUrl: "http://backend:8080"
+      Api__BaseUrl: "http://backend:8080"
+      Editors__InternalUrl: "http://onlyoffice"
+      Editors__PublicUrl: "http://localhost:8082"
+    volumes:
+      - ./bin:/data
+    networks:
+      - docnet
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ""
+    container_name: agent-office-frontend
+    restart: unless-stopped
+    ports:
+      - "8788:80"
+    depends_on:
+      - backend
+    networks:
+      - docnet
+
+  onlyoffice:
+    image: onlyoffice/documentserver:latest
+    container_name: agent-office-onlyoffice
+    restart: unless-stopped
+    ports:
+      - "8082:80"
+    environment:
+      JWT_ENABLED: "false"
+      WOPI_ENABLED: "true"
+    volumes:
+      - onlyoffice_data:/var/www/onlyoffice/Data
+      - onlyoffice_logs:/var/log/onlyoffice
+      - onlyoffice_db:/var/lib/postgresql
+      - onlyoffice_rabbitmq:/var/lib/rabbitmq
+    depends_on:
+      - backend
+    networks:
+      - docnet
+
+  agent-worker:
+    environment:
+      EDITOR_KIND: "onlyoffice"
+      EDITOR_HOST_RESOLVER_RULES: "MAP localhost:8788 frontend:80, MAP localhost:8082 onlyoffice:80"
+    depends_on:
+      - onlyoffice
+
+volumes:
+  onlyoffice_data:
+  onlyoffice_logs:
+  onlyoffice_db:
+  onlyoffice_rabbitmq:
+
+networks:
+  docnet:
+    driver: bridge

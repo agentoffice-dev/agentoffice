@@ -1,0 +1,70 @@
+services:
+  backend:
+    build:
+      context: ./backend/AgentOffice.API
+      dockerfile: Dockerfile
+    container_name: agent-office-backend
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: "Data Source=/data/agentoffice.db"
+      Storage__UploadPath: /data/uploads
+      AllowedOrigins__0: "http://localhost:8788"
+      Wopi__BaseUrl: "http://backend:8080"
+      Api__BaseUrl: "http://backend:8080"
+      Editors__InternalUrl: "http://collabora:9980"
+      Editors__PublicUrl: "http://localhost:9981"
+    volumes:
+      - ./bin:/data
+    networks:
+      - docnet
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ""
+    container_name: agent-office-frontend
+    restart: unless-stopped
+    ports:
+      - "8788:80"
+    depends_on:
+      - backend
+    networks:
+      - docnet
+
+  collabora:
+    image: collabora/code:latest
+    container_name: agent-office-collabora
+    ports:
+      - "9981:9980"
+    environment:
+      aliasgroup1: "http://backend:8080"
+      DONT_GEN_SSL_CERT: "true"
+      server_name: "localhost:9981"
+      dictionaries: "en_US zh_TW"
+      extra_params: "--o:ssl.enable=false --o:ssl.termination=false"
+    cap_add:
+      - MKNOD
+    depends_on:
+      - backend
+    networks:
+      - docnet
+
+  agent-worker:
+    environment:
+      EDITOR_KIND: "collabora"
+      EDITOR_HOST_RESOLVER_RULES: "MAP localhost:8788 frontend:80, MAP localhost:9981 collabora:9980"
+    depends_on:
+      - collabora
+
+networks:
+  docnet:
+    driver: bridge
