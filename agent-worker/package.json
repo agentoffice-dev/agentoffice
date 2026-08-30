@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc -p tsconfig.json",
+    "test": "tsx --test src/runtime/office-tools-pi.test.ts",
     "start": "node dist/index.js"
   },
   "dependencies": {

@@ -3,6 +3,7 @@ import type { TSchema } from 'typebox'
 import { z } from 'zod'
 import type { AgentSkill } from '../types.js'
 import { createDriveToolset, createOfficeToolset, type OfficeTool, type ToolContext } from './office-toolset.js'
+import { createSkillTool } from './skill-tool-pi.js'
 
 /**
  * Adapts the shared office toolset into pi's `AgentTool` shape. The definitions
@@ -20,36 +21,12 @@ function parameterSchema(shape: OfficeTool['inputSchema']): TSchema {
   return schema as unknown as TSchema
 }
 
-function createReadSkillTool(skills: AgentSkill[]): AgentTool {
-  return {
-    name: 'read_skill',
-    label: 'read_skill',
-    description: 'Load the complete instructions for one available skill. Call this when the request matches a skill in the system prompt catalog.',
-    parameters: parameterSchema({
-      skillId: z.string().describe('The exact skill id from <available_skills>.'),
-    }),
-    execute: async (_toolCallId: string, params: unknown) => {
-      const skillId = (params as { skillId?: unknown } | undefined)?.skillId
-      const skill = typeof skillId === 'string' ? skills.find(candidate => candidate.id === skillId) : undefined
-      if (!skill) throw new Error('Skill not found or not enabled for this agent. Use an exact id from <available_skills>.')
-      const description = skill.description?.trim() ? `\n${skill.description.trim()}` : ''
-      return {
-        content: [{
-          type: 'text',
-          text: `# Skill: ${skill.name}\nVersion: ${skill.version}${description}\n\n${skill.instructions}`,
-        }],
-        details: undefined,
-      }
-    },
-  }
-}
-
 export function createPiOfficeTools(context: ToolContext, skills: AgentSkill[]): AgentTool[] {
-  return [...adaptTools(createOfficeToolset(context)), createReadSkillTool(skills)]
+  return [...adaptTools(createOfficeToolset(context)), createSkillTool(skills)]
 }
 
 export function createPiDriveTools(taskId: string, skills: AgentSkill[]): AgentTool[] {
-  return [...adaptTools(createDriveToolset(taskId)), createReadSkillTool(skills)]
+  return [...adaptTools(createDriveToolset(taskId)), createSkillTool(skills)]
 }
 
 function adaptTools(definitions: OfficeTool[]): AgentTool[] {

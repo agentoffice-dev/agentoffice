@@ -153,7 +153,10 @@ public class AgentResourcesController(AppDbContext db, IDataProtectionProvider p
     {
         if (!await IsMember(workspaceId)) return Forbid();
         if (string.IsNullOrWhiteSpace(request.Name) || string.IsNullOrWhiteSpace(request.Instructions)) return BadRequest(new { error = "Name and instructions are required." });
-        var item = new AgentSkillDefinition { WorkspaceId = workspaceId, Name = request.Name.Trim(), Instructions = request.Instructions };
+        var name = request.Name.Trim();
+        if (await db.SkillDefinitions.AnyAsync(x => x.WorkspaceId == workspaceId && x.Name.ToLower() == name.ToLower()))
+            return Conflict(new { error = "Skill names must be unique within a workspace." });
+        var item = new AgentSkillDefinition { WorkspaceId = workspaceId, Name = name, Instructions = request.Instructions };
         ApplySkill(item, request); db.SkillDefinitions.Add(item); await db.SaveChangesAsync(); return Ok(ToSkillDto(item));
     }
 
@@ -161,8 +164,13 @@ public class AgentResourcesController(AppDbContext db, IDataProtectionProvider p
     public async Task<IActionResult> UpdateSkill(Guid workspaceId, Guid id, [FromBody] SaveSkillRequest request)
     {
         if (!await IsMember(workspaceId)) return Forbid();
+        if (string.IsNullOrWhiteSpace(request.Name) || string.IsNullOrWhiteSpace(request.Instructions)) return BadRequest(new { error = "Name and instructions are required." });
         var item = await db.SkillDefinitions.FirstOrDefaultAsync(x => x.Id == id && x.WorkspaceId == workspaceId);
-        if (item is null) return NotFound(); item.Name = request.Name.Trim(); item.Instructions = request.Instructions; ApplySkill(item, request); await db.SaveChangesAsync(); return Ok(ToSkillDto(item));
+        if (item is null) return NotFound();
+        var name = request.Name.Trim();
+        if (await db.SkillDefinitions.AnyAsync(x => x.WorkspaceId == workspaceId && x.Id != id && x.Name.ToLower() == name.ToLower()))
+            return Conflict(new { error = "Skill names must be unique within a workspace." });
+        item.Name = name; item.Instructions = request.Instructions; ApplySkill(item, request); await db.SaveChangesAsync(); return Ok(ToSkillDto(item));
     }
 
     [HttpDelete("skills/{id:guid}")]

@@ -66,9 +66,11 @@ and saving. Only use the tools actually available in this mode: create_document 
       '  </skill>',
     ].join('\n')).join('\n')
     sections.push(`## Available skills
-The following skills provide specialized instructions for specific tasks. When the request matches a
-skill's description, call read_skill with its id before acting. Do not claim to have followed a skill
-until you have read it. Only the skill catalog is included here; full instructions are loaded on demand.
+The following skills provide specialized capabilities and domain instructions. When the request matches
+a skill's description, calling the Skill tool before acting is a blocking requirement. Pass the exact
+skill name and any arguments supplied by the requester. Never claim to have used a skill without calling
+the tool, never guess an unlisted skill, and do not call a skill that is already loaded. Only this catalog
+is included in the system prompt; the complete instructions are expanded into the conversation on demand.
 
 <available_skills>
 ${catalog}
