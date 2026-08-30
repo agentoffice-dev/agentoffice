@@ -86,7 +86,7 @@ public record AgentProfileDto(
     string? SandboxMode,
     string? ApprovalPolicy);
 
-public record AgentSkillDto(string Name, string? Description, string Version, string Instructions);
+public record AgentSkillDto(Guid Id, string Name, string? Description, string Version, string Instructions);
 
 public record AgentChatTurnDto(string SenderName, string Content, DateTime CreatedAt);
 

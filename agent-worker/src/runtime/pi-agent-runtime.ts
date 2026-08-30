@@ -121,8 +121,8 @@ export class PiAgentRuntime implements AgentRuntime {
         systemPrompt: buildSystemPrompt(context, IN_PROCESS_TOOL_ACCESS),
         model,
         tools: page
-          ? createPiOfficeTools({ browser: this.browser, page, taskId: task.id })
-          : createPiDriveTools(task.id),
+          ? createPiOfficeTools({ browser: this.browser, page, taskId: task.id }, context.skills)
+          : createPiDriveTools(task.id, context.skills),
       },
       streamFn,
       // The workspace's own key, never whatever the worker happens to hold in its

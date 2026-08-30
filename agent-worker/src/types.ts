@@ -32,6 +32,7 @@ export type AgentProfile = {
 }
 
 export type AgentSkill = {
+  id: string
   name: string
   description?: string | null
   version: string

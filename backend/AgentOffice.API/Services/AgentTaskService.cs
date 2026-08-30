@@ -109,7 +109,7 @@ public class AgentTaskService(
         var skills = agent is null
             ? []
             : agent.Skills.Select(link => link.Skill).Where(skill => skill.Enabled)
-                .Select(skill => new AgentSkillDto(skill.Name, skill.Description, skill.Version, skill.Instructions))
+                .Select(skill => new AgentSkillDto(skill.Id, skill.Name, skill.Description, skill.Version, skill.Instructions))
                 .ToList();
 
         return new AgentTaskContextDto(

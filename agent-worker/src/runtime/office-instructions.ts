@@ -2,6 +2,15 @@ import { config } from '../config.js'
 import type { AgentTaskContext } from '../types.js'
 import type { RuntimeInput } from './agent-runtime.js'
 
+function escapeXml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;')
+}
+
 /**
  * The rules the runtime hands its model, minus the one sentence that has to
  * change per runtime: how the office tools are reached. pi takes them as plain
@@ -47,8 +56,23 @@ export function buildSystemPrompt(context: AgentTaskContext, toolAccessNote: str
 No Office document is open. Ignore all editor-specific rules about observe, reading, editing, formatting,
 and saving. Only use the tools actually available in this mode: create_document and say.`)
   if (context.agent?.systemPrompt?.trim()) sections.push(`## Workspace instructions\n${context.agent.systemPrompt.trim()}`)
-  for (const skill of context.skills) {
-    sections.push(`## Skill: ${skill.name} (v${skill.version})\n${skill.description ?? ''}\n${skill.instructions}`.trim())
+  if (context.skills.length > 0) {
+    const catalog = context.skills.map(skill => [
+      '  <skill>',
+      `    <id>${escapeXml(skill.id)}</id>`,
+      `    <name>${escapeXml(skill.name)}</name>`,
+      `    <description>${escapeXml(skill.description?.trim() || 'No description provided.')}</description>`,
+      `    <version>${escapeXml(skill.version)}</version>`,
+      '  </skill>',
+    ].join('\n')).join('\n')
+    sections.push(`## Available skills
+The following skills provide specialized instructions for specific tasks. When the request matches a
+skill's description, call read_skill with its id before acting. Do not claim to have followed a skill
+until you have read it. Only the skill catalog is included here; full instructions are loaded on demand.
+
+<available_skills>
+${catalog}
+</available_skills>`)
   }
   return sections.join('\n\n')
 }
