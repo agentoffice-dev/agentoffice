@@ -19,6 +19,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<AgentSkillDefinition> SkillDefinitions => Set<AgentSkillDefinition>();
     public DbSet<AgentMcpServer> AgentMcpServers => Set<AgentMcpServer>();
     public DbSet<AgentSkill> AgentSkills => Set<AgentSkill>();
+    public DbSet<AgentSchedule> AgentSchedules => Set<AgentSchedule>();
 
     // Timestamps are UTC everywhere; SQLite drops that fact on the way in and out.
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
@@ -124,6 +125,16 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .WithMany(task => task.Events)
             .HasForeignKey(agentEvent => agentEvent.AgentTaskId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<AgentSchedule>().HasOne(x => x.Workspace).WithMany()
+            .HasForeignKey(x => x.WorkspaceId).OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<AgentSchedule>().HasOne(x => x.CreatedBy).WithMany()
+            .HasForeignKey(x => x.CreatedById).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<AgentSchedule>().HasOne(x => x.Agent).WithMany()
+            .HasForeignKey(x => x.AgentId).IsRequired(false).OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity<AgentSchedule>().HasOne(x => x.Document).WithMany()
+            .HasForeignKey(x => x.DocumentId).IsRequired(false).OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity<AgentSchedule>().HasIndex(x => new { x.Enabled, x.NextRunAt });
 
         modelBuilder.Entity<WorkspaceAgent>().HasOne(x => x.Workspace).WithMany(x => x.Agents)
             .HasForeignKey(x => x.WorkspaceId).OnDelete(DeleteBehavior.Cascade);

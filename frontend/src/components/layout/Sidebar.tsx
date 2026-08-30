@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom'
 import {
   FileText, ChevronDown, Plus, Check, LogOut,
   Folder, Trash2, X, HardDrive, Settings, Bot,
-  Languages,
+  Languages, CalendarClock,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
@@ -205,6 +205,17 @@ export default function Sidebar() {
               >
                 <Bot className="w-4 h-4 text-gray-500" />
                 {t('nav.agents')}
+              </Link>
+              <Link
+                to={`/workspaces/${currentWorkspace.id}/schedules`}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                  location.pathname === `/workspaces/${currentWorkspace.id}/schedules`
+                    ? 'bg-gray-200/80 text-gray-900 font-medium'
+                    : 'text-gray-700 hover:bg-gray-200/60'
+                }`}
+              >
+                <CalendarClock className="w-4 h-4 text-gray-500" />
+                Agent 排程
               </Link>
               <Link
                 to={`/workspaces/${currentWorkspace.id}`}

@@ -49,6 +49,8 @@ builder.Services.AddScoped<IWorkspaceService, WorkspaceService>();
 builder.Services.AddScoped<IFolderService, FolderService>();
 builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddScoped<IAgentTaskService, AgentTaskService>();
+builder.Services.AddScoped<IAgentScheduleService, AgentScheduleService>();
+builder.Services.AddHostedService<AgentScheduleWorker>();
 builder.Services.AddScoped<IAgentIdentity, AgentIdentityService>();
 builder.Services.AddScoped<IAgentDirectory, AgentDirectoryService>();
 builder.Services.AddScoped<IEventPublisher, EventPublisher>();
@@ -254,6 +256,24 @@ using (var scope = app.Services.CreateScope())
     try { db.Database.ExecuteSqlRaw("ALTER TABLE \"Agents\" ADD COLUMN \"AvatarUrl\" TEXT"); } catch { }
     // Idempotent: a task remembers which agent the chat message tagged.
     try { db.Database.ExecuteSqlRaw("ALTER TABLE \"AgentTasks\" ADD COLUMN \"AgentId\" TEXT"); } catch { }
+
+    db.Database.ExecuteSqlRaw("""
+        CREATE TABLE IF NOT EXISTS "AgentSchedules" (
+            "Id" TEXT NOT NULL CONSTRAINT "PK_AgentSchedules" PRIMARY KEY,
+            "WorkspaceId" TEXT NOT NULL, "CreatedById" TEXT NOT NULL,
+            "AgentId" TEXT NULL, "DocumentId" TEXT NULL,
+            "Name" TEXT NOT NULL, "Prompt" TEXT NOT NULL,
+            "Interval" INTEGER NOT NULL, "Unit" INTEGER NOT NULL, "Enabled" INTEGER NOT NULL,
+            "NextRunAt" TEXT NOT NULL, "LastRunAt" TEXT NULL, "LastTaskId" TEXT NULL,
+            "CreatedAt" TEXT NOT NULL, "UpdatedAt" TEXT NOT NULL,
+            FOREIGN KEY ("WorkspaceId") REFERENCES "Workspaces" ("Id") ON DELETE CASCADE,
+            FOREIGN KEY ("CreatedById") REFERENCES "Users" ("Id") ON DELETE RESTRICT,
+            FOREIGN KEY ("AgentId") REFERENCES "Agents" ("Id") ON DELETE SET NULL,
+            FOREIGN KEY ("DocumentId") REFERENCES "Documents" ("Id") ON DELETE SET NULL
+        );
+        CREATE INDEX IF NOT EXISTS "IX_AgentSchedules_Enabled_NextRunAt" ON "AgentSchedules" ("Enabled", "NextRunAt");
+        CREATE INDEX IF NOT EXISTS "IX_AgentSchedules_WorkspaceId" ON "AgentSchedules" ("WorkspaceId");
+        """);
 
     // Drive chat tasks have no open document. Upgrade older databases whose
     // AgentTasks.DocumentId column was created as NOT NULL.

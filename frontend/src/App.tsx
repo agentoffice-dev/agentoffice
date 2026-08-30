@@ -11,6 +11,7 @@ import PdfPreviewPage from './pages/PdfPreviewPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import AgentsPage from './pages/AgentsPage'
+import SchedulesPage from './pages/SchedulesPage'
 
 export default function App() {
   return (
@@ -26,6 +27,7 @@ export default function App() {
               <Route path="/workspaces/:id" element={<WorkspacePage />} />
               <Route path="/workspaces/:id/settings" element={<SettingsPage />} />
               <Route path="/workspaces/:id/agents" element={<AgentsPage />} />
+              <Route path="/workspaces/:id/schedules" element={<SchedulesPage />} />
             </Route>
             <Route path="/editor/:id" element={<EditorPage />} />
             <Route path="/pdf/:id" element={<PdfPreviewPage />} />
